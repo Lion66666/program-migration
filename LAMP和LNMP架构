@@ -1,0 +1,100 @@
+ LAMP架构
+L	   LINUX
+A（N）      APACHE （NGINX）
+M	   MYSQL
+P	   PHP or python
+
+LAMP
+安装程序--》编写配置文件--》导入数据文件--》修改权限--》数据库授权
+setenforce 0
+systemctl stop firewalld
+
+yum install -y httpd php php-mysql mariadb-server
+cd /etc/httpd/conf.d/
+vim www.bb.com.conf
+
+<VirtualHost *:80>
+	ServerName www.bb.com
+	DocumentRoot /var/www/bb.com
+</VirtualHost>
+
+mkdir -p /var/www/bb.com
+
+unzip Discuz_X2.5_SC_UTF8.zip
+
+cp -r upload/* /var/www/bb.com/  # -r 带属性复制
+
+chown apache. /var/www/bb.com/ -R   #修改数据文件权限 保证apache有操作的权限
+
+systemctl start httpd
+
+vim /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4
+localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1   www.bb.com    #可以是回环地址也可以是自己的ip
+
+systemctl start mariadb
+mysqladmin create bb   #在外面创库
+mysql
+MariaDB [(none)]> grant all on bb.* to bs@'localhost' identified by 'uplooking';
+Query OK, 0 rows affected (0.00 sec)
+
+MariaDB [(none)]> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+firefox  开启网页浏览
+
+
+
+————————————————————————————————————————————————————————————————————————
+
+LNMP
+
+安装软件--》写配置文件--》放数据文件--》数据库授权--》起服务
+
+yum install -y php php-mysql mariadb-server
+rpm -ivh nginx-1.8.0-1.el7.ngx.x86_64.rpm
+rpm -ivh spawn-fcgi-1.6.3-5.el7.x86_64.rpm
+
+cd /etc/nginx/conf.d/
+cp default.conf www.bj.com.conf
+vim www.bj.com.conf
+server {
+    listen       80;
+    server_name  www.bj.com;
+
+        root   /usr/share/nginx/bj.com;
+        index  index.html index.htm index.php;
+
+     location ~ \.php$ {
+         fastcgi_pass   127.0.0.1:9000;
+         fastcgi_index  index.php;
+         fastcgi_param  SCRIPT_FILENAME  /usr/share/nginx/bj.com$fastcgi_script_name;
+         include        fastcgi_params;
+     }
+}
+
+cp Discuz_X2.5_SC_UTF8.zip /tmp
+unzip Discuz_X2.5_SC_UTF8.zip
+
+mkdir -p /usr/share/nginx/bj.com
+cp -r upload/* /usr/share/nginx/bj.com/    #必须加-r 带属性复制
+chown nginx. /usr/share/nginx/bj.com/ -R
+
+vim /etc/sysconfig/spawn-fcgi
+OPTIONS="-u nginx -g nginx -p 9000 -C 32 -F 1 -P /var/run/spawn-fcgi.pid -- /usr/bin/php-cgi"
+
+systemctl start spawn-fcgi  #注意
+
+systemctl start mariadb
+mysqladmin create bj
+授权
+
+
+systemctl start nginx
+
+
+改解析
+
+
